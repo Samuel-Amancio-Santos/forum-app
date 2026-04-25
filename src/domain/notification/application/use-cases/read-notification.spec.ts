@@ -1,8 +1,8 @@
 import { ReadNotificationUseCase } from './read-notification'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
-import { makeNotification } from '../../../../../@test/factories/make-notification'
-import { InMemoryNotificationsRepository } from '../../../../../@test/repositories/in-memory-notifications-repository'
+import { makeNotification } from '@/test/factories/make-notification'
+import { InMemoryNotificationsRepository } from '@/test/repositories/in-memory-notifications-repository'
 
 let inMemoryNotificationsRepository: InMemoryNotificationsRepository
 let sut: ReadNotificationUseCase

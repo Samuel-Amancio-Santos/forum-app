@@ -11,7 +11,7 @@ import {
 } from '../use-cases/send-notification'
 import { InMemoryNotificationsRepository } from '@test/repositories/in-memory-notifications-repository'
 import { makeQuestion } from '@test/factories/make-question'
-import { SpyInstance } from 'vitest'
+import { SpyInstance } from 'vitest' //TODO: SpyInstance was decrepeted
 import { waitFor } from '@test/utils/wait-for'
 import { InMemoryStudentsRepository } from '@test/repositories/in-memory-students-repository'
 import { InMemoryAttachmentsRepository } from '@test/repositories/in-memory-attachments-repository'
@@ -25,7 +25,7 @@ let inMemoryStudentsRepository: InMemoryStudentsRepository
 let inMemoryAttachmentsRepository: InMemoryAttachmentsRepository
 let sendNotificationUseCase: SendNotificationUseCase
 
-let sendNotificationExecuteSpy: SpyInstance<
+let sendNotificationExecuteSpy: SpyInstance< // (Espiar o envio de uma função, apos o evento de criação de question for dispachado)
   [SendNotificationUseCaseRequest],
   Promise<SendNotificationUseCaseResponse>
 >
