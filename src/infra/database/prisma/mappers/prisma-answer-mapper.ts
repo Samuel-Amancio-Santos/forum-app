@@ -1,9 +1,9 @@
-import { Prisma, Answer as _Answer,  } from '@/generated/prisma/client'
+import { Prisma, Answer as PrismaAnswer } from '@/generated/prisma/client'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { Answer } from '@/domain/forum/enterprise/entities/answer'
 
 export class PrismaAnswerMapper {
-  static toDomain(raw: _Answer): Answer {
+  static toDomain(raw: PrismaAnswer): Answer {
     return Answer.create(
       {
         content: raw.content,

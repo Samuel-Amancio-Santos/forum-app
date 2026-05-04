@@ -1,10 +1,13 @@
 // import { Notification as PrismaNotification, Prisma } from '@prisma/client'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
-import { Notification as _Notification, Prisma } from '@/generated/prisma/client'
+import {
+  Notification as PrismaNotification,
+  Prisma,
+} from '@/generated/prisma/client'
 import { Notification } from '@/domain/notification/enterprise/entities/notification'
 
 export class PrismaNotificationMapper {
-  static toDomain(raw: _Notification): Notification {
+  static toDomain(raw: PrismaNotification): Notification {
     return Notification.create(
       {
         title: raw.title,

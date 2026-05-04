@@ -1,7 +1,8 @@
 import { InMemoryAttachmentsRepository } from '@test/repositories/in-memory-attachments-repository'
 import { UploadAndCreateAttachmentUseCase } from './upload-and-create-attachment'
 import { InvalidAttachmentTypeError } from './errors/invalid-attachment-type-error'
-import { FakeUploader } from '@@test/storage/fake-uploader'
+import { FakeUploader } from '@test/storage/fake-uploader'
+import { readFileSync } from 'node:fs'
 
 let inMemoryAttachmentsRepository: InMemoryAttachmentsRepository
 let fakeUploader: FakeUploader
@@ -20,11 +21,15 @@ describe('Upload and create attachment', () => {
   })
 
   it('should be able to upload and create an attachment', async () => {
+    const buffer = readFileSync('./test/e2e/profile.png')
+
     const result = await sut.execute({
       fileName: 'profile.png',
       fileType: 'image/png',
-      body: Buffer.from(''),
+      body: buffer,
     })
+
+    console.log(fakeUploader.uploads)
 
     expect(result.isRight()).toBe(true)
     expect(result.value).toEqual({

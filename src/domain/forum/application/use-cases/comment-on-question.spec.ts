@@ -4,7 +4,7 @@ import { CommentOnQuestionUseCase } from '@/domain/forum/application/use-cases/c
 import { InMemoryQuestionAttachmentsRepository } from '@test/repositories/in-memory-question-attachments-repository'
 import { InMemoryAttachmentsRepository } from '@test/repositories/in-memory-attachments-repository'
 import { InMemoryStudentsRepository } from '@test/repositories/in-memory-students-repository'
-import { InMemoryQuestionsRepository } from '../../../../../@test/repositories/in-memory-questions-repository'
+import { InMemoryQuestionsRepository } from '@/test/repositories/in-memory-questions-repository'
 
 let inMemoryQuestionsRepository: InMemoryQuestionsRepository
 let inMemoryQuestionAttachmentsRepository: InMemoryQuestionAttachmentsRepository

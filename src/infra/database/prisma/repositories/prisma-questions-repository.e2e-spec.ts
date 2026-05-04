@@ -9,6 +9,8 @@ import { AttachmentFactory } from '@test/factories/make-attachment'
 import { QuestionFactory } from '@test/factories/make-question'
 import { QuestionAttachmentFactory } from '@test/factories/make-question-attachments'
 import { StudentFactory } from '@test/factories/make-student'
+import { randomUUID } from 'node:crypto'
+import { QuestionDetailsCacheMapper } from '@/infra/cache/mappers/question-details-cache-mapper'
 
 describe('Prisma Questions Repository (E2E)', () => {
   let app: INestApplication
@@ -42,6 +44,16 @@ describe('Prisma Questions Repository (E2E)', () => {
     await app.init()
   })
 
+  function getCacheKey(slug: string) {
+    // O repositório agora inclui o `schema` (DATABASE_URL?schema=...) na key
+    // para evitar colisões no Redis entre execuções/workers.
+    const schema = process.env.DATABASE_URL
+      ? new URL(process.env.DATABASE_URL).searchParams.get('schema')
+      : null
+
+    return `question:${schema ?? 'default'}:${slug}:details`
+  }
+
   it('should cache question details', async () => {
     const user = await studentFactory.makePrismaStudent()
 
@@ -60,9 +72,11 @@ describe('Prisma Questions Repository (E2E)', () => {
 
     const questionDetails = await questionsRepository.findDetailsBySlug(slug)
 
-    const cached = await cacheRepository.get(`question:${slug}:details`)
+    const cached = await cacheRepository.get(getCacheKey(slug))
 
-    expect(cached).toEqual(JSON.stringify(questionDetails))
+    expect(cached).toEqual(
+      JSON.stringify(QuestionDetailsCacheMapper.toCache(questionDetails!)),
+    )
   })
 
   it('should return cached question details on subsequent calls', async () => {
@@ -82,13 +96,25 @@ describe('Prisma Questions Repository (E2E)', () => {
     const slug = question.slug.value
 
     await cacheRepository.set(
-      `question:${slug}:details`,
-      JSON.stringify({ empty: true }),
+      getCacheKey(slug),
+      JSON.stringify({
+        questionId: randomUUID(),
+        authorId: randomUUID(),
+        author: 'Cached Author',
+        title: 'Cached Title',
+        content: 'Cached Content',
+        slug,
+        bestAnswerId: null,
+        attachments: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+      }),
     )
 
     const questionDetails = await questionsRepository.findDetailsBySlug(slug)
 
-    expect(questionDetails).toEqual({ empty: true })
+    expect(questionDetails?.title).toEqual('Cached Title')
+    expect(questionDetails?.author).toEqual('Cached Author')
   })
 
   it('should reset question details cache when saving the question', async () => {
@@ -108,13 +134,24 @@ describe('Prisma Questions Repository (E2E)', () => {
     const slug = question.slug.value
 
     await cacheRepository.set(
-      `question:${slug}:details`,
-      JSON.stringify({ empty: true }),
+      getCacheKey(slug),
+      JSON.stringify({
+        questionId: randomUUID(),
+        authorId: randomUUID(),
+        author: 'Cached Author',
+        title: 'Cached Title',
+        content: 'Cached Content',
+        slug,
+        bestAnswerId: null,
+        attachments: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+      }),
     )
 
     await questionsRepository.save(question)
 
-    const cached = await cacheRepository.get(`question:${slug}:details`)
+    const cached = await cacheRepository.get(getCacheKey(slug))
 
     expect(cached).toBeNull()
   })

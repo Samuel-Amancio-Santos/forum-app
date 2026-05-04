@@ -15,7 +15,7 @@ import { Public } from '@/infra/auth/public'
 
 const createAccountBodySchema = z.object({
   name: z.string(),
-  email: z.string().email(),
+  email: z.email(),
   password: z.string(),
 })
 

@@ -13,7 +13,7 @@ import { WrongCredentialsError } from '@/domain/forum/application/use-cases/erro
 import { Public } from '@/infra/auth/public'
 
 const authenticateBodySchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string(),
 })
 

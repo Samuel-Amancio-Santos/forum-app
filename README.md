@@ -142,3 +142,18 @@ Siga as instruções abaixo para configurar e executar o projeto em seu ambiente
   pnpm test:e2e
   ```
 
+Comentários adicionados (explicando o porquê)
+
+
+  • src/infra/cache/mappers/question-details-cache-mapper.ts
+    • Explica que ValueObjects/Entities não podem ser cacheados “crus” via JSON.stringify/parse porque perdem getters/métodos, então usamos DTO plano e reidratação.
+
+
+  • src/infra/database/prisma/repositories/prisma-questions-repository.ts
+    • No cache hit, explica por que precisa reidratar (senão o Presenter quebra com toString() e gera 500 intermitente).
+    • Na criação da key, explica por que inclui o schema (evitar colisão no Redis entre workers/execuções).
+    • No save, explica que a invalidação do cache precisa usar a mesma key.
+
+
+  • src/infra/database/prisma/repositories/prisma-questions-repository.e2e-spec.ts
+    • Explica por que o teste usa key com schema (mesma razão: isolamento no Redis).

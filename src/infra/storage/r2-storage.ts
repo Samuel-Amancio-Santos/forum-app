@@ -31,7 +31,7 @@ export class R2Storage implements Uploader {
     body,
   }: UploadParams): Promise<{ url: string }> {
     const uploadId = randomUUID()
-    const uniqueFileName = `${uploadId}-${fileName}`
+    const uniqueFileName = `${uploadId}-${fileName}` // evitar duplicação em nome de arquivos
 
     await this.client.send(
       new PutObjectCommand({

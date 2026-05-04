@@ -3,12 +3,16 @@ import { QuestionsRepository } from '@/domain/forum/application/repositories/que
 import { Question } from '@/domain/forum/enterprise/entities/question'
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma.service'
-import { PrismaQuestionMapper } from '../mappers/prisma-question-mapper'
 import { QuestionAttachmentsRepository } from '@/domain/forum/application/repositories/question-attachments-repository'
 import { QuestionDetails } from '@/domain/forum/enterprise/entities/value-objects/question-details'
 import { PrismaQuestionDetailsMapper } from '../mappers/prisma-question-details-mapper'
 import { DomainEvents } from '@/core/events/domain-events'
 import { CacheRepository } from '@/infra/cache/cache-repository'
+import { PrismaQuestionMapper } from '../mappers/prisma-question-mapper'
+import {
+  QuestionDetailsCacheMapper,
+  type CachedQuestionDetails,
+} from '@/infra/cache/mappers/question-details-cache-mapper'
 
 @Injectable()
 export class PrismaQuestionsRepository implements QuestionsRepository {
@@ -47,12 +51,16 @@ export class PrismaQuestionsRepository implements QuestionsRepository {
   }
 
   async findDetailsBySlug(slug: string): Promise<QuestionDetails | null> {
-    const cacheHit = await this.cache.get(`question:${slug}:details`)
+    const cacheKey = this.getQuestionDetailsCacheKey(slug)
+    const cacheHit = await this.cache.get(cacheKey)
 
     if (cacheHit) {
-      const cacheData = JSON.parse(cacheHit)
-
-      return cacheData
+      // IMPORTANT:
+      // `JSON.parse` retorna um objeto "plano" (sem métodos/getters).
+      // Se retornarmos isso diretamente, o Presenter pode quebrar ao acessar
+      // `questionId.toString()` / `slug.value`, causando 500 intermitente.
+      const cacheData = JSON.parse(cacheHit) as CachedQuestionDetails
+      return QuestionDetailsCacheMapper.toDomain(cacheData)
     }
 
     const question = await this.prisma.question.findUnique({
@@ -72,11 +80,29 @@ export class PrismaQuestionsRepository implements QuestionsRepository {
     const questionDetails = PrismaQuestionDetailsMapper.toDomain(question)
 
     await this.cache.set(
-      `question:${slug}:details`,
-      JSON.stringify(questionDetails),
+      cacheKey,
+      JSON.stringify(QuestionDetailsCacheMapper.toCache(questionDetails)),
     )
 
     return questionDetails
+  }
+
+  private getQuestionDetailsCacheKey(slug: string) {
+    // IMPORTANT:
+    // Nos testes E2E usamos `DATABASE_URL?schema=<uuid>` por worker.
+    // Se a key não incluir o schema, diferentes execuções/workers podem
+    // compartilhar a mesma key no Redis e gerar flakiness.
+    const schema =
+      process.env.DATABASE_URL &&
+      (() => {
+        try {
+          return new URL(process.env.DATABASE_URL).searchParams.get('schema')
+        } catch {
+          return null
+        }
+      })()
+
+    return `question:${schema ?? 'default'}:${slug}:details`
   }
 
   async findManyRecent({ page }: PaginationParams): Promise<Question[]> {
@@ -121,7 +147,8 @@ export class PrismaQuestionsRepository implements QuestionsRepository {
       this.questionAttachmentsRepository.deleteMany(
         question.attachments.getRemovedItems(),
       ),
-      this.cache.delete(`question:${data.slug}:details`),
+      // Mantém a invalidação alinhada com a key usada em `findDetailsBySlug`.
+      this.cache.delete(this.getQuestionDetailsCacheKey(data.slug)),
     ])
 
     DomainEvents.dispatchEventsForAggregate(question.id)

@@ -1,9 +1,12 @@
-import { Prisma, Attachment as _Attachment } from '@/generated/prisma/client'
+import {
+  Prisma,
+  Attachment as PrismaAttachment,
+} from '@/generated/prisma/client'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { QuestionAttachment } from '@/domain/forum/enterprise/entities/question-attachment'
 
 export class PrismaQuestionAttachmentMapper {
-  static toDomain(raw: _Attachment): QuestionAttachment {
+  static toDomain(raw: PrismaAttachment): QuestionAttachment {
     if (!raw.questionId) {
       throw new Error('Invalid attachment type.')
     }

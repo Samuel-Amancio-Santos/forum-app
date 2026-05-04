@@ -1,8 +1,8 @@
-import { PrismaClient } from '@/generated/prisma/client';
+import { PrismaClient } from '@/generated/prisma/client'
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaPg } from '@prisma/adapter-pg'
 
-import "dotenv/config";
+import 'dotenv/config'
 
 @Injectable()
 export class PrismaService
@@ -10,19 +10,27 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-       const connectionString = `${process.env.DATABASE_URL}`;
-       const adapter = new PrismaPg({ connectionString });
+    const connectionString = `${process.env.DATABASE_URL}`
 
-      super({adapter})
+    // O ?schema= é ignorado pelo driver pg — precisa ser extraído e
+    // passado explicitamente como segundo argumento do PrismaPg
+    const url = new URL(connectionString)
+    const schema = url.searchParams.get('schema') ?? 'public'
+    url.searchParams.delete('schema') // remove para não confundir o pg
 
+    const adapter = new PrismaPg(
+      { connectionString: url.toString() },
+      { schema }, // ← aqui o schema é aplicado corretamente via search_path
+    )
+
+    super({ adapter })
   }
 
-   onModuleInit() {
-       return this.$connect()
+  onModuleInit() {
+    return this.$connect()
   }
 
-
-    onModuleDestroy() {
-     return this.$disconnect()
+  onModuleDestroy() {
+    return this.$disconnect()
   }
 }

@@ -58,10 +58,9 @@ import { CacheModule } from '../cache/cache.module'
     },
     {
       provide: NotificationsRepository,
-      useClass: PrismaNotificationsRepository,  
+      useClass: PrismaNotificationsRepository,
     },
-      // "incremental": true,
-
+    // "incremental": true,
   ],
   exports: [
     PrismaService,
